@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[oc]
+.venv/
+dist/
+
+# Configuracion local
+.env
+
+# Fixtures pesados y salidas de tests
+tests/files/download/
