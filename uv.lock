@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 
 [[package]]
@@ -282,25 +282,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ms365"
-version = "0.2.0"
-source = { editable = "." }
-dependencies = [
-    { name = "playwright" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ipykernel" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "playwright", specifier = "==1.62.0" }]
-
-[package.metadata.requires-dev]
-dev = [{ name = "ipykernel", specifier = "==7.1.0" }]
-
-[[package]]
 name = "nest-asyncio"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -506,6 +487,25 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/b5/33b781666f3f52ae834bc9c8e38f4f0483a826c5a91cccc993292007bf10/pyzmq-27.2.0-cp315-cp315t-win_amd64.whl", hash = "sha256:edce90a1e588ec63adbf612cc0ad582de4169cd216c7ae53c15f42a2ee902f35", size = 670701, upload-time = "2026-08-20T19:07:32.895Z" },
     { url = "https://files.pythonhosted.org/packages/6e/97/bc4f0edefb992df4fdebcf9f0cc40f631cd4ed277e1ed59ef2cd99a5c8c5/pyzmq-27.2.0-cp315-cp315t-win_arm64.whl", hash = "sha256:a843094b4d3d633bc3623e47a2ff50742d6af02bc1f7606aa2e67e971e21878d", size = 581985, upload-time = "2026-08-20T19:07:34.19Z" },
 ]
+
+[[package]]
+name = "sharepoint"
+version = "0.7.0"
+source = { editable = "." }
+dependencies = [
+    { name = "playwright" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ipykernel" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "playwright", specifier = "==1.62.0" }]
+
+[package.metadata.requires-dev]
+dev = [{ name = "ipykernel", specifier = "==7.1.0" }]
 
 [[package]]
 name = "six"

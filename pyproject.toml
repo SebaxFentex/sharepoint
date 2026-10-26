@@ -1,7 +1,7 @@
 [project]
-name = "ms365"
-version = "0.2.0"
-description = "Utilidades para Microsoft 365 (SharePoint, etc.) con Playwright"
+name = "sharepoint"
+version = "0.7.0"
+description = "Utilidades para SharePoint con Playwright"
 readme = "README.md"
 authors = [
     { name = "Sebastián Fuentes", email = "sebastianfuentesab@gmail.com" }

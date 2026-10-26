@@ -8,4 +8,7 @@ dist/
 .env
 
 # Fixtures pesados y salidas de tests
-tests/files/download/
+tests/archivos/descarga/
+
+# Logs de desarrollo (los crea configurar_log al correr tests o login)
+logs/
