@@ -29,11 +29,11 @@ def _limpiar_carpeta_descarga() -> Path:
     log.info("Carpeta de descarga limpia: %s", CARPETA_DESCARGA)
     return CARPETA_DESCARGA
 
-def principal() -> None:
+def main() -> None:
     configurar_log()
     _limpiar_carpeta_descarga()
     try:
-        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, sin_ventana=False) as cliente:
+        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, mostrar_navegador=True) as cliente:
             cliente.descargar_archivo_compartido(URL_ARCHIVO_COMPARTIDO, str(CARPETA_DESCARGA))
             log.info("OK: descarga de archivo completada: %s", CARPETA_DESCARGA)
         esperado = (CARPETA_SUBIDA / "archivo_1.txt").read_text(encoding="utf-8")
@@ -46,4 +46,4 @@ def principal() -> None:
         raise SystemExit(3) from exc
 
 if __name__ == "__main__":
-    principal()
+    main()

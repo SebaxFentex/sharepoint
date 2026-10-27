@@ -8,10 +8,9 @@ from sharepoint._excepciones import (
 )
 from sharepoint.cliente import ClienteSharepoint
 
-# Nota: autenticacion.iniciar_sesion NO se re-exporta aqui a proposito. Importarlo en el
-# __init__ hace que `python -m sharepoint.autenticacion` emita RuntimeWarning
-# (modulo ya en sys.modules antes de ejecutarse como __main__).
-# Canonico: from sharepoint.autenticacion import iniciar_sesion
+# Nota: login_manual NO se re-exporta aqui a proposito para mantener la
+# superficie publica minima (cliente + excepciones). Canonico:
+# from sharepoint.cliente import login_manual
 __all__ = [
     "ClienteSharepoint",
     "ExcepcionCarpetaNoEncontrada",

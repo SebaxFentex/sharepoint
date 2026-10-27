@@ -33,11 +33,11 @@ def _limpiar_carpeta_descarga() -> Path:
     log.info("Carpeta de descarga limpia: %s", CARPETA_DESCARGA)
     return CARPETA_DESCARGA
 
-def principal() -> None:
+def main() -> None:
     configurar_log()
     _limpiar_carpeta_descarga()
     try:
-        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, sin_ventana=False) as descargador:
+        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, mostrar_navegador=True) as descargador:
             for nombre in CARPETAS_A_DESCARGAR:
                 url_carpeta = f"{URL_CARPETA_BASE}/{nombre}"
                 destino = CARPETA_DESCARGA
@@ -51,4 +51,4 @@ def principal() -> None:
         raise SystemExit(3) from exc
 
 if __name__ == "__main__":
-    principal()
+    main()

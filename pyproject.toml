@@ -1,6 +1,6 @@
 [project]
 name = "sharepoint"
-version = "0.7.0"
+version = "1.0.0"
 description = "Utilidades para SharePoint con Playwright"
 readme = "README.md"
 authors = [

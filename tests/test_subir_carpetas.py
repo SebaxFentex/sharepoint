@@ -21,10 +21,10 @@ CARPETAS_A_SUBIR = [str(p) for p in sorted(CARPETA_SUBIDA.iterdir()) if p.is_dir
 
 log = logging.getLogger("sharepoint")
 
-def principal() -> None:
+def main() -> None:
     configurar_log()
     try:
-        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, sin_ventana=False) as cargador:
+        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, mostrar_navegador=True) as cargador:
             cargador.subir_carpetas({URL_CARPETA_DESTINO: CARPETAS_A_SUBIR})
             log.info("OK: carga de carpetas completada")
     except ExcepcionNoAutenticado as exc:
@@ -32,4 +32,4 @@ def principal() -> None:
         raise SystemExit(3) from exc
 
 if __name__ == "__main__":
-    principal()
+    main()

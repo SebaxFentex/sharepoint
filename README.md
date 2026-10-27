@@ -47,10 +47,11 @@ from sharepoint import (
     ExcepcionCarpetaNoEncontrada,
     ExcepcionNoAutenticado,
 )
-from sharepoint.autenticacion import iniciar_sesion  # login interactivo
+from sharepoint.cliente import login_manual  # login interactivo standalone
+# (o doble clic a ejecutables/login.bat, que corre `python -m sharepoint`)
 ```
 
-`ClienteSharepoint(correo_usuario, url_inicio, sin_ventana=True, pausa_ms=0)`:
+`ClienteSharepoint(correo_usuario, url_inicio, mostrar_navegador=False, pausa_ms=0, permitir_login_interactivo=False)`:
 
 - `subir_archivos(archivos_por_carpeta)` — sube archivos a una o varias
   carpetas de SharePoint.
@@ -72,6 +73,26 @@ Perfil dedicado en `%LOCALAPPDATA%\perfil_playwright_sharepoint` por
 defecto (se cambia con `SHAREPOINT_CARPETA_PERFIL`). Primera vez o sesion
 vencida: doble clic a `ejecutables/login.bat` **de la libreria**, inicia
 sesion con MFA y pulsa Enter (sirve para primer login y refresco).
+
+En produccion cada proyecto necesita su propio `ejecutables/login.bat`
+con la URL como argumento (asi no necesita ninguna variable):
+
+```bat
+@echo off
+cd /d "%~dp0..\python_<nombre>"
+uv run python -m sharepoint https://empresa.sharepoint.com/.../Home.aspx
+```
+
+(Alternativa: `SHAREPOINT_URL_INICIO` en su `.env` y
+`uv run --env-file .env python -m sharepoint`.)
+
+**Si la sesion vence en produccion:** el cliente lanza
+`ExcepcionNoAutenticado` (con `codigo_salida = 3`) al entrar al `with`. El
+proyecto debe capturarla, salir con ese codigo y alertar al operador, que
+corre el `login.bat` del proyecto, hace el MFA y reejecuta. No hay
+reintento automatico (el MFA no se puede automatizar), salvo opt-in
+explicito con `permitir_login_interactivo=True` y ventana visible: en ese
+caso abre el login en la misma sesion y reintenta una vez.
 
 ### 6. Variables de entorno
 
@@ -98,8 +119,8 @@ src/sharepoint/
   _log.py            # configurar_log() para entrypoints (la libreria solo emite)
   _env.py            # rutas fijas del perfil en %LOCALAPPDATA%/perfil_playwright_sharepoint
   _excepciones.py    # ExcepcionNoAutenticado, ExcepcionCarpetaNoEncontrada
-  autenticacion.py   # iniciar_sesion() interactivo (`python -m sharepoint.autenticacion`)
-  cliente.py         # ClienteSharepoint (operaciones con sesion valida)
+  cliente.py         # ClienteSharepoint + login_manual (login en propio contexto)
+  __main__.py        # renovar_autenticacion() para `python -m sharepoint` (login manual)
   _subida.py         # subir_archivos / subir_carpetas (internas, reciben pagina)
   _descarga.py       # descargar_carpeta / descargar_archivo_compartido (internas)
 ejecutables/

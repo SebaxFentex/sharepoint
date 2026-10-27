@@ -17,17 +17,17 @@ def carpeta_perfil() -> Path:
     return Path(local) / "perfil_playwright_sharepoint"
 
 
-def parametros_ventana(sin_ventana: bool) -> dict:
+def parametros_ventana(mostrar_navegador: bool) -> dict:
     """Solo tamano de ventana/viewport segun modo (sin channel).
 
-    headed: no_viewport=True para que el contenido siga a la ventana
+    headed (mostrar): no_viewport=True para que el contenido siga a la ventana
         (--window-size fija el tamaño inicial; --start-maximized no sirve
         porque no toca el viewport, que defaultea a 1280x720).
-    headless: viewport 1920x1080 explicito (sin ventana no hay a quien seguir).
+    headless (no mostrar): viewport 1920x1080 explicito (sin ventana no hay a quien seguir).
     """
-    if sin_ventana:
-        return {"viewport": {"width": 1920, "height": 1080}}
-    return {
-        "args": ["--window-size=1920,1080"],
-        "no_viewport": True,
-    }
+    if mostrar_navegador:
+        return {
+            "args": ["--window-size=1920,1080"],
+            "no_viewport": True,
+        }
+    return {"viewport": {"width": 1920, "height": 1080}}

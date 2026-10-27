@@ -19,10 +19,10 @@ URL_INICIO = _requerir_env("SHAREPOINT_URL_INICIO")
 CARPETA_SUBIDA = Path(__file__).resolve().parent / "archivos" / "subida"
 ARCHIVOS_A_SUBIR = [str(p) for p in sorted(CARPETA_SUBIDA.glob("*.txt"))]
 
-def principal() -> None:
+def main() -> None:
     configurar_log()
     try:
-        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, sin_ventana=False) as cargador:
+        with ClienteSharepoint(correo_usuario=CORREO_USUARIO, url_inicio=URL_INICIO, mostrar_navegador=True) as cargador:
             cargador.subir_archivos({URL_CARPETA_DESTINO: ARCHIVOS_A_SUBIR})
             log.info("OK: carga de archivos completada")
     except ExcepcionNoAutenticado as exc:
@@ -30,4 +30,4 @@ def principal() -> None:
         raise SystemExit(3) from exc
 
 if __name__ == "__main__":
-    principal()
+    main()

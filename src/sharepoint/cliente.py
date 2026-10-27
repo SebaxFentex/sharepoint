@@ -2,6 +2,7 @@
 
 import logging
 from contextlib import contextmanager
+from pathlib import Path
 
 from playwright.sync_api import BrowserContext, Page, sync_playwright
 from playwright.sync_api import Error as PlaywrightError
@@ -21,46 +22,58 @@ class ClienteSharepoint:
     Mantiene el navegador y coordina las operaciones sobre su contexto.
 
     Si la sesion de Microsoft no esta disponible, los metodos publicos lanzan
-    ExcepcionNoAutenticado.
+    ExcepcionNoAutenticado (codigo_salida 3).
     """
 
     def __init__(
         self,
         correo_usuario: str,
         url_inicio: str,
-        sin_ventana: bool = True,
+        mostrar_navegador: bool = False,
         pausa_ms: int = 0,
+        permitir_login_interactivo: bool = False,
     ):
-        """Inicializa el cliente y valida autenticacion al arrancar.
+        """Inicializa el cliente (barato y total: no valida sesion).
 
-        El perfil de navegador dedicado siempre es
-        %LOCALAPPDATA%/programas_python/sharepoint/perfil_navegador_playwright
-        (ver sharepoint._env). No usa perfiles del navegador.
+        La validacion ocurre al entrar al `with` (ver `__enter__`).
 
         Args:
             correo_usuario: Correo usado para validar contexto de sesion en la UI.
             url_inicio: URL para validar sesion al arrancar (requerido, sin default).
-            sin_ventana: Ejecuta el navegador sin interfaz grafica si es True.
+            mostrar_navegador: Muestra el navegador si es True (debug). Default
+                False: headless para scheduler.
             pausa_ms: Retardo entre acciones de Playwright en milisegundos (debug headed).
-
-        Raises:
-            ExcepcionNoAutenticado: si se detecta pantalla de login.
+            permitir_login_interactivo: Si es True y hay ventana, ante sesion
+                vencida abre el login interactivo y reintenta una vez. Default
+                False: falla rapido (obligatorio para scheduler).
         """
         self.correo_usuario = correo_usuario
+        self.url_inicio = url_inicio
+        self.mostrar_navegador = mostrar_navegador
+        self.permitir_login_interactivo = permitir_login_interactivo
+        self._pausa_ms = pausa_ms
         destino = carpeta_perfil()
-        log.info("Perfil: %s | sin_ventana=%s", destino, sin_ventana)
+        log.info("Perfil: %s | mostrar_navegador=%s", destino, mostrar_navegador)
         self._playwright = sync_playwright().start()
+        self._abrir_contexto(destino)
+
+    def _abrir_contexto(self, destino: Path) -> None:
+        """Abre el contexto persistente de Chromium sobre el perfil."""
         self._context: BrowserContext = self._playwright.chromium.launch_persistent_context(
             user_data_dir=destino,
-            headless=sin_ventana,
-            slow_mo=pausa_ms,
-            **parametros_ventana(sin_ventana),
+            headless=not self.mostrar_navegador,
+            slow_mo=self._pausa_ms,
+            **parametros_ventana(self.mostrar_navegador),
         )
 
-        self._iniciar_sesion(url_inicio)
-
     def __enter__(self):
-        """Permite usar el cliente con with."""
+        """Valida autenticacion y entrega el cliente listo para operar.
+
+        Raises:
+            ExcepcionNoAutenticado: si se detecta pantalla de login y no
+                procede el re-login interactivo.
+        """
+        self._iniciar_sesion(self.url_inicio)
         return self
 
     def __exit__(self, *args):
@@ -140,8 +153,12 @@ class ClienteSharepoint:
         with self._pagina() as pagina:
             _descarga.descargar_archivo_compartido(pagina, url_archivo_compartido, ruta_destino)
 
-    def _iniciar_sesion(self, url_inicio: str) -> None:
+    def _iniciar_sesion(self, url_inicio: str, reintento: bool = False) -> None:
         """Abre SharePoint Home y valida si la sesion sigue autenticada.
+
+        Con ventana y `permitir_login_interactivo`, ante sesion vencida abre
+        el login manual una sola vez y revalida. En cualquier otro caso
+        cierra y lanza ExcepcionNoAutenticado.
 
         Raises:
             ExcepcionNoAutenticado: cuando aparece la pantalla de inicio de sesion.
@@ -159,11 +176,31 @@ class ClienteSharepoint:
             log.info("Sesión válida")
             return
 
+        if self.mostrar_navegador and self.permitir_login_interactivo and not reintento:
+            log.info("Sesión vencida: abriendo login interactivo")
+            self._login_interactivo(url_inicio)
+            self._iniciar_sesion(url_inicio, reintento=True)
+            return
+
         self.cerrar()
         log.error("Sesión vencida")
         raise ExcepcionNoAutenticado(
-            "Sesion vencida. Ejecuta ejecutables/login.bat en una sesion interactiva y reintenta."
+            "Sesion vencida. Inicia sesion con `python -m sharepoint <URL>` "
+            "o define SHAREPOINT_URL_INICIO en el .env, en una sesion interactiva, "
+            "y reintenta."
         )
+
+    def _login_interactivo(self, url_inicio: str) -> None:
+        """Abre una pestana en el propio contexto para login manual con MFA.
+
+        No cierra ni reabre el navegador: la sesion queda guardada en el
+        perfil y el mismo contexto la ve de inmediato.
+        """
+        pagina = self._context.new_page()
+        pagina.goto(url_inicio, wait_until="domcontentloaded")
+        print("Inicia sesion con tu usuario + MFA en el navegador.")
+        input("Cuando veas el sitio, pulsa Enter aqui... ")
+        pagina.close()
 
     def _obtener_pagina(self) -> Page:
         """Retorna una pagina activa o crea una nueva si no existe."""
@@ -184,3 +221,31 @@ class ClienteSharepoint:
             yield pagina
         finally:
             pagina.close()
+
+
+def login_manual(url_inicio: str) -> Path:
+    """Login interactivo standalone (sin cliente): contexto temporal propio.
+
+    Usado por `python -m sharepoint` y `login.bat`. Como no hay cliente
+    corriendo, no hay conflicto de lock con el perfil.
+
+    Args:
+        url_inicio: Pagina a abrir para autenticarse (requerido, sin default).
+
+    Returns:
+        Ruta del perfil utilizado.
+    """
+    destino = carpeta_perfil()
+    log.info("Abriendo perfil para login: %s", destino)
+    with sync_playwright() as p:
+        contexto = p.chromium.launch_persistent_context(
+            user_data_dir=str(destino),
+            headless=False,
+            **parametros_ventana(True),
+        )
+        contexto.new_page().goto(url_inicio, wait_until="domcontentloaded")
+        print("Inicia sesion con tu usuario + MFA en el navegador.")
+        input("Cuando veas el sitio, pulsa Enter aqui... ")
+        contexto.close()
+    log.info("Sesion guardada en: %s", destino)
+    return destino
