@@ -3,7 +3,7 @@ import os
 import shutil
 from pathlib import Path
 
-from sharepoint import ClienteSharepoint, ExcepcionNoAutenticado
+from sharepoint import ClienteSharepoint, ExcepcionArchivoNoEncontrado, ExcepcionNoAutenticado
 from sharepoint._log import configurar_log
 
 log = logging.getLogger("sharepoint")
@@ -23,7 +23,7 @@ CORREO_USUARIO = _requerir_env("SHAREPOINT_CORREO_USUARIO")
 URL_INICIO = _requerir_env("SHAREPOINT_URL_INICIO")
 
 def _limpiar_carpeta_descarga() -> Path:
-    """Borra el contenido previo de download/ y lo recrea vacio."""
+    """Borra el contenido previo de descarga/ y lo recrea vacio."""
     shutil.rmtree(CARPETA_DESCARGA, ignore_errors=True)
     CARPETA_DESCARGA.mkdir(parents=True, exist_ok=True)
     log.info("Carpeta de descarga limpia: %s", CARPETA_DESCARGA)
@@ -44,6 +44,9 @@ def main() -> None:
     except ExcepcionNoAutenticado as exc:
         log.error("Fallo autenticacion: %s", exc)
         raise SystemExit(3) from exc
+    except ExcepcionArchivoNoEncontrado as exc:
+        log.error("Archivo no encontrado: %s", exc)
+        raise SystemExit(4) from exc
 
 if __name__ == "__main__":
     main()

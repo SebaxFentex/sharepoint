@@ -141,20 +141,30 @@ def _cargar_archivos(
 
 
 def _esperar_fin_subida(pagina: Page, verbo: str) -> None:
-    """Espera el toast de progreso y confirma Reemplazar si aparece."""
+    """Espera el toast de progreso y confirma Reemplazar si aparece.
+
+    Sin dialogo de reemplazo es el caso normal (no habia colision): DEBUG y
+    salir. Si el dialogo aparece y falla el reintento, WARNING con detalle:
+    la subida ya ocurrio, propagar haria que el llamador repita todo.
+    """
     aviso_progreso = pagina.get_by_role("alert").filter(has_text=verbo)
     aviso_progreso.wait_for(state="attached", timeout=10000)
     aviso_progreso.wait_for(state="detached", timeout=120000)
 
+    boton_reemplazar = pagina.get_by_role("button", name="Reemplazar")
     try:
-        boton_reemplazar = pagina.get_by_role("button", name="Reemplazar")
         boton_reemplazar.wait_for(state="attached", timeout=5000)
+    except PlaywrightTimeoutError:
+        log.debug("Sin dialogo de reemplazo: no habia archivos homonimos")
+        return
+
+    try:
         boton_reemplazar.click()
         log.info("Reemplazando...")
         aviso_progreso.wait_for(state="attached", timeout=5000)
         aviso_progreso.wait_for(state="detached", timeout=120000)
-    except Exception:
-        pass
+    except Exception as error: # El archivo ya se subio; se reporta sin abortar.  # noqa: BLE001
+        log.warning("Reemplazo no confirmado: %s", error)
 
 
 def _subir_archivos_a_carpeta(

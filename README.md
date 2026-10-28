@@ -44,6 +44,7 @@ with ClienteSharepoint(correo_usuario="usuario@empresa.com",
 ```python
 from sharepoint import (
     ClienteSharepoint,
+    ExcepcionArchivoNoEncontrado,
     ExcepcionCarpetaNoEncontrada,
     ExcepcionNoAutenticado,
 )
@@ -60,12 +61,17 @@ from sharepoint.cliente import login_manual  # login interactivo standalone
 - `descargar_carpeta(url_carpeta, carpeta_destino)` — descarga la carpeta
   como zip y la extrae.
 - `descargar_archivo_compartido(url_archivo_compartido, ruta_destino)` —
-  descarga un archivo desde su vinculo compartido.
+  descarga un archivo desde su vinculo compartido; lanza `ValueError` si el
+  vinculo es invalido y `ExcepcionArchivoNoEncontrado` si el archivo no
+  existe.
 
-Errores por excepcion: `ExcepcionCarpetaNoEncontrada` (carpeta inexistente),
-`ExcepcionNoAutenticado` (sesion vencida: corre `ejecutables/login.bat` en
-sesion interactiva y reintenta). Los entrypoints propios usan codigos
-`0` OK · `2` carpeta inexistente · `3` autenticacion.
+Errores por excepcion: `ExcepcionCarpetaNoEncontrada` (carpeta inexistente,
+codigo 2), `ExcepcionArchivoNoEncontrado` (archivo compartido inexistente,
+codigo 4), `ExcepcionNoAutenticado` (sesion vencida, codigo 3: corre
+`ejecutables/login.bat` en sesion interactiva y reintenta); `ValueError` si
+el vinculo compartido no permite construir la URL. Codigos de los
+entrypoints: `0` OK · `2` carpeta inexistente · `3` autenticacion · `4`
+archivo no encontrado.
 
 ### 5. Perfil y login
 

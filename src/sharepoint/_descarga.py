@@ -7,7 +7,7 @@ from zipfile import ZipFile
 
 from playwright.sync_api import Error, Locator, Page
 
-from ._excepciones import ExcepcionCarpetaNoEncontrada
+from ._excepciones import ExcepcionArchivoNoEncontrado, ExcepcionCarpetaNoEncontrada
 
 log = logging.getLogger(__name__)
 
@@ -57,12 +57,13 @@ def descargar_carpeta(pagina: Page, url_carpeta: str, ruta_local: str) -> None:
 
 
 def descargar_archivo_compartido(pagina: Page, url_archivo: str, ruta_local: str) -> None:
-    """Descarga un archivo individual usando un vinculo compartido."""
-    try:
-        url_descarga = _construir_url_descarga_directa(url_archivo)
-    except ValueError:
-        log.exception("El vinculo compartido no es valido.")
-        return
+    """Descarga un archivo individual usando un vinculo compartido.
+
+    Raises:
+        ValueError: si el vinculo no permite construir la URL directa.
+        ExcepcionArchivoNoEncontrado: si el archivo no existe en SharePoint.
+    """
+    url_descarga = _construir_url_descarga_directa(url_archivo)
 
     log.info("Descargando archivo: %s", url_descarga)
 
@@ -71,8 +72,8 @@ def descargar_archivo_compartido(pagina: Page, url_archivo: str, ruta_local: str
             pagina.goto(url_descarga)
 
             if pagina.title() == "Error": # El link no lleva a ningun archivo.
-                log.info("El archivo no existe, se cancela la descarga.")
-                return
+                log.error("El archivo no existe: %s", url_archivo)
+                raise ExcepcionArchivoNoEncontrado(f"Archivo no encontrado: {url_archivo}")
 
         except Error: # SharePoint cierra la pagina al iniciar la descarga directa. La descarga continúa igualmente.
             pass

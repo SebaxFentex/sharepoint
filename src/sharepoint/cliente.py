@@ -57,23 +57,21 @@ class ClienteSharepoint:
         self._playwright = sync_playwright().start()
         self._abrir_contexto(destino)
 
-    def _abrir_contexto(self, destino: Path) -> None:
-        """Abre el contexto persistente de Chromium sobre el perfil."""
-        self._context: BrowserContext = self._playwright.chromium.launch_persistent_context(
-            user_data_dir=destino,
-            headless=not self.mostrar_navegador,
-            slow_mo=self._pausa_ms,
-            **parametros_ventana(self.mostrar_navegador),
-        )
-
     def __enter__(self):
         """Valida autenticacion y entrega el cliente listo para operar.
+
+        Si la validacion falla (sesion vencida, error de red, Ctrl+C), cierra
+        el navegador antes de propagar para no dejar procesos huerfanos.
 
         Raises:
             ExcepcionNoAutenticado: si se detecta pantalla de login y no
                 procede el re-login interactivo.
         """
-        self._iniciar_sesion(self.url_inicio)
+        try:
+            self._iniciar_sesion(self.url_inicio)
+        except BaseException:
+            self.cerrar()
+            raise
         return self
 
     def __exit__(self, *args):
@@ -81,12 +79,25 @@ class ClienteSharepoint:
         self.cerrar()
 
     def cerrar(self):
-        """Cierra el navegador y libera recursos."""
+        """Cierra navegador, driver de Playwright y libera recursos.
+
+        Idempotente: puede llamarse varias veces y nunca propaga errores.
+        """
         try:
             for pagina in self._context.pages:
-                pagina.close()
+                try:
+                    pagina.close()
+                except Exception: # La pagina pudo cerrarse antes; seguir con el resto.  # noqa: S110
+                    pass
+        except Exception: # El contexto pudo morir; no impide parar el driver.  # noqa: S110
+            pass
+        try:
             self._context.close()
-        except Exception: # Puede estar ya cerrado; no es un error funcional para el llamador.  # noqa: S110
+        except Exception: # Puede estar ya cerrado; no es un error funcional.  # noqa: S110
+            pass
+        try:
+            self._playwright.stop()
+        except Exception: # Si ya se detuvo, no hay nada que hacer.  # noqa: S110
             pass
         log.debug("Navegador cerrado")
 
@@ -147,11 +158,21 @@ class ClienteSharepoint:
 
         Raises:
             ExcepcionNoAutenticado: si el cliente no esta disponible.
+            ExcepcionArchivoNoEncontrado: si el archivo no existe en SharePoint.
             ValueError: si la URL compartida no permite construir UniqueId valido.
         """
         log.debug("Descarga de archivo compartido -> %s", ruta_destino)
         with self._pagina() as pagina:
             _descarga.descargar_archivo_compartido(pagina, url_archivo_compartido, ruta_destino)
+
+    def _abrir_contexto(self, destino: Path) -> None:
+        """Abre el contexto persistente de Chromium sobre el perfil."""
+        self._context: BrowserContext = self._playwright.chromium.launch_persistent_context(
+            user_data_dir=destino,
+            headless=not self.mostrar_navegador,
+            slow_mo=self._pausa_ms,
+            **parametros_ventana(self.mostrar_navegador),
+        )
 
     def _iniciar_sesion(self, url_inicio: str, reintento: bool = False) -> None:
         """Abre SharePoint Home y valida si la sesion sigue autenticada.
@@ -252,7 +273,9 @@ def login_manual(url_inicio: str) -> Path:
             headless=False,
             **parametros_ventana(True),
         )
-        _esperar_mfa(contexto.new_page(), url_inicio)
-        contexto.close()
+        try:
+            _esperar_mfa(contexto.new_page(), url_inicio)
+        finally:
+            contexto.close()
     log.info("Sesion guardada en: %s", destino)
     return destino

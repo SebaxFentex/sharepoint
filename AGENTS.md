@@ -22,7 +22,7 @@ src/sharepoint/
   __init__.py        # NullHandler + ClienteSharepoint + excepciones (NO re-exporta iniciar_sesion)
   _log.py       # configurar_log() + purgar_logs() — sin efectos al importar
   _env.py        # carpeta_perfil() y parametros_ventana() — rutas fijas
-  _excepciones.py    # ExcepcionNoAutenticado, ExcepcionCarpetaNoEncontrada
+  _excepciones.py    # ExcepcionNoAutenticado, ExcepcionCarpetaNoEncontrada, ExcepcionArchivoNoEncontrado
   cliente.py         # ClienteSharepoint + login_manual + _login_interactivo
   __main__.py        # renovar_autenticacion() para `python -m sharepoint` (login manual)
   _subida.py         # subir_archivos / subir_carpetas (internas, reciben pagina)
@@ -73,8 +73,9 @@ logs/                   # la crea configurar_log al correr tests o login (ignora
    `NullHandler` en el paquete; `configurar_log()` solo se llama desde
    `tests/*` y `__main__.renovar_autenticacion()`. Jamas configurar logging en
    `__init__` ni en constructores.
-4. **`.bat` solo en `ejecutables/`** invocando `uv run`. Nada de
-   `python -c` con quoting.
+4. **`.bat` de proceso en `ejecutables/` invocando `uv run`** (nada de
+   `python -c` con quoting). `abrir_vscode.bat` es utilitario: solo abre el
+   editor y por eso no lleva `uv run`.
 5. **Prohibido `click(force=True)`**: salta accionabilidad y produce clics
    fantasma (causo la intermitencia de la subida). Si un clic falla, que
    falle con diagnostico.
@@ -117,8 +118,9 @@ logs/                   # la crea configurar_log al correr tests o login (ignora
 
 ## 5. Scheduler y codigos de salida
 
-- `0` OK · `2` carpeta inexistente · `3` autenticacion (corre
-  `ejecutables/login.bat` en sesion interactiva y reintenta).
+- `0` OK · `2` carpeta inexistente · `3` autenticacion · `4` archivo
+  compartido inexistente (corre `ejecutables/login.bat` en sesion
+  interactiva y reintenta solo el 3).
 - La tarea corre como el **mismo usuario Windows** duenio del perfil, con
   `mostrar_navegador=False`. Sesion muerta = exit 3, sin reintento automatico
   (con MFA no hay refresh desatendido posible). Nunca programar tareas con
@@ -195,3 +197,12 @@ logs/                   # la crea configurar_log al correr tests o login (ignora
 - **v0.9.1 (2026-10-26)**: `principal()` acepta la URL como argumento
   opcional (precedencia: argumento > `SHAREPOINT_URL_INICIO` > error, sin
   prompts); produccion queda sin variables obligatorias.
+- **v1.1.0 (2026-10-26)**: contrato de errores y cierre de recursos.
+  `descargar_archivo_compartido` propaga `ValueError` y lanza
+  `ExcepcionArchivoNoEncontrado` (codigo 4) si el archivo no existe (antes
+  retornaba en silencio); `__enter__` cierra el navegador si falla la
+  validacion; `cerrar()` es idempotente por pagina y detiene el driver
+  (`playwright.stop()`), que antes quedaba vivo; `_esperar_fin_subida`
+  distingue "sin dialogo" (DEBUG) de "reemplazo fallido" (WARNING);
+  `_abrir_contexto` movido al bloque privado (orden dunder → publicos →
+  privados); regla 4 del AGENTS precisa el caso de `abrir_vscode.bat`.

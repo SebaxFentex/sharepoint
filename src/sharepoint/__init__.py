@@ -3,6 +3,7 @@ import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 from sharepoint._excepciones import (
+    ExcepcionArchivoNoEncontrado,
     ExcepcionCarpetaNoEncontrada,
     ExcepcionNoAutenticado,
 )
@@ -13,6 +14,7 @@ from sharepoint.cliente import ClienteSharepoint
 # from sharepoint.cliente import login_manual
 __all__ = [
     "ClienteSharepoint",
+    "ExcepcionArchivoNoEncontrado",
     "ExcepcionCarpetaNoEncontrada",
     "ExcepcionNoAutenticado",
 ]

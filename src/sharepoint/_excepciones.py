@@ -8,3 +8,9 @@ class ExcepcionCarpetaNoEncontrada(Exception):
     """Se lanza cuando la carpeta de SharePoint no existe (404)."""
 
     codigo_salida = 2
+
+
+class ExcepcionArchivoNoEncontrado(Exception):
+    """Se lanza cuando el archivo compartido no existe en SharePoint."""
+
+    codigo_salida = 4
