@@ -22,7 +22,7 @@ def descargar_carpeta(pagina: Page, url_carpeta: str, ruta_local: str) -> None:
     carpeta_destino.mkdir(parents=True, exist_ok=True)
 
     log.info("Navegando a carpeta: %s", url_carpeta)
-    pagina.goto(url_carpeta, wait_until="load")
+    pagina.goto(url_carpeta, wait_until="load", timeout=60000)
 
     carpeta_no_encontrada = pagina.locator(XPATH_CARPETA_NO_ENCONTRADA)
     if carpeta_no_encontrada.count() > 0:
@@ -60,8 +60,8 @@ def descargar_archivo_compartido(pagina: Page, url_archivo: str, ruta_local: str
     """Descarga un archivo individual usando un vinculo compartido."""
     try:
         url_descarga = _construir_url_descarga_directa(url_archivo)
-    except Exception:
-        log.exception("Error al intentar construir el link de descarga directa.")
+    except ValueError:
+        log.exception("El vinculo compartido no es valido.")
         return
 
     log.info("Descargando archivo: %s", url_descarga)
