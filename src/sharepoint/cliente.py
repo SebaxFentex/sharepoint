@@ -197,10 +197,7 @@ class ClienteSharepoint:
         perfil y el mismo contexto la ve de inmediato.
         """
         pagina = self._context.new_page()
-        pagina.goto(url_inicio, wait_until="domcontentloaded")
-        print("Inicia sesion con tu usuario + MFA en el navegador.")
-        input("Cuando veas el sitio, pulsa Enter aqui... ")
-        pagina.close()
+        _esperar_mfa(pagina, url_inicio)
 
     def _obtener_pagina(self) -> Page:
         """Retorna una pagina activa o crea una nueva si no existe."""
@@ -223,6 +220,18 @@ class ClienteSharepoint:
             pagina.close()
 
 
+def _esperar_mfa(pagina: Page, url_inicio: str) -> None:
+    """Navega a la pagina de inicio y espera el Enter del operador.
+
+    Unico punto del repo donde la libreria espera a un humano (MFA no es
+    automatizable). Solo se usa en flujos con ventana visible.
+    """
+    pagina.goto(url_inicio, wait_until="domcontentloaded")
+    print("Inicia sesion con tu usuario + MFA en el navegador.")
+    input("Cuando veas el sitio, pulsa Enter aqui... ")
+    pagina.close()
+
+
 def login_manual(url_inicio: str) -> Path:
     """Login interactivo standalone (sin cliente): contexto temporal propio.
 
@@ -243,9 +252,7 @@ def login_manual(url_inicio: str) -> Path:
             headless=False,
             **parametros_ventana(True),
         )
-        contexto.new_page().goto(url_inicio, wait_until="domcontentloaded")
-        print("Inicia sesion con tu usuario + MFA en el navegador.")
-        input("Cuando veas el sitio, pulsa Enter aqui... ")
+        _esperar_mfa(contexto.new_page(), url_inicio)
         contexto.close()
     log.info("Sesion guardada en: %s", destino)
     return destino
