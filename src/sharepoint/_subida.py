@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+from typing import Literal
 
 from playwright.sync_api import Page
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
@@ -98,7 +99,7 @@ def _eliminar_carpeta_existente(pagina: Page, nombre_carpeta: str) -> None:
 def _cargar_archivos(
     pagina: Page,
     correo_usuario: str,
-    tipo: str,
+    tipo: Literal["archivo", "carpeta"],
     rutas: list[str],
     url_carpeta: str,
     intentos: int = 3,
