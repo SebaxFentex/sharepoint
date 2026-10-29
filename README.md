@@ -5,7 +5,7 @@ Online con Playwright + Chromium bundled. Autenticacion con usuario + MFA
 sobre perfil dedicado persistente (sin app en Entra por restriccion
 corporativa; la via REST esta bloqueada por el tenant).
 
-## Uso en un proyecto de trabajo
+## Que necesita el proyecto consumidor
 
 ### 1. Declarar la dependencia
 
@@ -69,9 +69,11 @@ Errores por excepcion: `ExcepcionCarpetaNoEncontrada` (carpeta inexistente,
 codigo 2), `ExcepcionArchivoNoEncontrado` (archivo compartido inexistente,
 codigo 4), `ExcepcionNoAutenticado` (sesion vencida, codigo 3: corre
 `ejecutables/login.bat` en sesion interactiva y reintenta); `ValueError` si
-el vinculo compartido no permite construir la URL. Codigos de los
-entrypoints: `0` OK · `2` carpeta inexistente · `3` autenticacion · `4`
-archivo no encontrado.
+el vinculo compartido no permite construir la URL.
+
+Codigos de salida: `0` OK · `1` fallo generico (universales) · `2` carpeta
+inexistente · `3` autenticacion · `4` archivo no encontrado. Propaga el
+codigo sin repetir el numero: `sys.exit(exc.codigo_salida)`.
 
 ### 5. Perfil y login
 
@@ -110,12 +112,18 @@ abajo).
 
 ## Desarrollo de la libreria
 
+Reglas inviolables, arquitectura interna y verificacion antes de publicar:
+ver `AGENTS.md`.
+
 ### Instalacion
 
 ```bash
 uv sync
 uv run playwright install chromium   # solo la primera vez
 ```
+
+Publicar: doble clic a `ejecutables/build.bat` (corre `uv build` y lista
+`dist/`), luego commit, tag `vX.Y.Z` y release en GitHub.
 
 ### Estructura relevante
 
@@ -130,8 +138,10 @@ src/sharepoint/
   _subida.py         # subir_archivos / subir_carpetas (internas, reciben pagina)
   _descarga.py       # descargar_carpeta / descargar_archivo_compartido (internas)
 ejecutables/
+  build.bat          # construye el paquete (`uv build`) y lista dist/
   login.bat          # abre el perfil para login/refresco manual
   abrir_vscode.bat   # abre la raiz de la libreria en VS Code
+  tests/             # un .bat por test (mismo nombre que el test)
 tests/
   test_subir_archivos.py     # sube *.txt de archivos/subida/
   test_subir_carpetas.py     # sube carpetas no vacias; reemplaza carpeta homonima
@@ -150,6 +160,9 @@ uv run --env-file .env python tests/test_subir_carpetas.py
 uv run --env-file .env python tests/test_descargar_carpetas.py
 uv run --env-file .env python tests/test_descargar_archivo.py
 ```
+
+O con doble clic, un `.bat` por test en `ejecutables/tests/` (mismo nombre
+que el test; deja ver el codigo de salida antes de cerrar).
 
 Requieren `SHAREPOINT_CORREO_USUARIO`, `SHAREPOINT_URL_INICIO`,
 `SHAREPOINT_URL_CARPETA_PRUEBAS` (`SHAREPOINT_URL_ARCHIVO_COMPARTIDO` para

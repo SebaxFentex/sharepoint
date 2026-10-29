@@ -28,8 +28,10 @@ src/sharepoint/
   _subida.py         # subir_archivos / subir_carpetas (internas, reciben pagina)
   _descarga.py       # descargar_carpeta / descargar_archivo_compartido (internas)
 ejecutables/
+  build.bat          # construye el paquete (`uv build`) y lista dist/
   login.bat          # login/refresco manual: `uv run ... python -m sharepoint`
   abrir_vscode.bat   # abre la raiz de la libreria en VS Code
+  tests/             # un .bat por test (mismo nombre que el test)
 tests/
   test_*.py          # e2e contra SHAREPOINT_URL_CARPETA_PRUEBAS (exigen MFA humano; sin env, fallan con mensaje)
   archivos/subida/      # fixtures locales (no usar rutas personales)
@@ -74,7 +76,8 @@ logs/                   # la crea configurar_log al correr tests o login (ignora
    `tests/*` y `__main__.renovar_autenticacion()`. Jamas configurar logging en
    `__init__` ni en constructores.
 4. **`.bat` de proceso en `ejecutables/` invocando `uv run`** (nada de
-   `python -c` con quoting). `abrir_vscode.bat` es utilitario: solo abre el
+   `python -c` con quoting). Un `.bat` por cada test vive en
+   `ejecutables/tests/`. `abrir_vscode.bat` es utilitario: solo abre el
    editor y por eso no lleva `uv run`.
 5. **Prohibido `click(force=True)`**: salta accionabilidad y produce clics
    fantasma (causo la intermitencia de la subida). Si un clic falla, que
@@ -206,3 +209,7 @@ logs/                   # la crea configurar_log al correr tests o login (ignora
   distingue "sin dialogo" (DEBUG) de "reemplazo fallido" (WARNING);
   `_abrir_contexto` movido al bloque privado (orden dunder → publicos →
   privados); regla 4 del AGENTS precisa el caso de `abrir_vscode.bat`.
+- **v1.2.0 (2026-10-26)**: tooling de publicacion. `ejecutables/build.bat`
+  construye el paquete y lista `dist/`; `ejecutables/tests/` tiene un `.bat`
+  por test (mismo nombre, `pause` para leer el resultado y propagacion del
+  codigo de salida). Sin cambios de API.
