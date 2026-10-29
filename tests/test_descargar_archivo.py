@@ -3,7 +3,11 @@ import os
 import shutil
 from pathlib import Path
 
-from sharepoint import ClienteSharepoint, ExcepcionArchivoNoEncontrado, ExcepcionNoAutenticado
+from sharepoint import (
+    ClienteSharepoint,
+    ExcepcionArchivoNoEncontrado,
+    ExcepcionNoAutenticado,
+)
 from sharepoint._log import configurar_log
 
 log = logging.getLogger("sharepoint")

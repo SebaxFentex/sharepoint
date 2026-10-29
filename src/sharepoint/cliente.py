@@ -87,17 +87,17 @@ class ClienteSharepoint:
             for pagina in self._context.pages:
                 try:
                     pagina.close()
-                except Exception: # La pagina pudo cerrarse antes; seguir con el resto.  # noqa: S110
+                except Exception: # La pagina pudo cerrarse antes; seguir con el resto.  # noqa: BLE001, S110
                     pass
-        except Exception: # El contexto pudo morir; no impide parar el driver.  # noqa: S110
+        except Exception: # El contexto pudo morir; no impide parar el driver.  # noqa: BLE001, S110
             pass
         try:
             self._context.close()
-        except Exception: # Puede estar ya cerrado; no es un error funcional.  # noqa: S110
+        except Exception: # Puede estar ya cerrado; no es un error funcional.  # noqa: BLE001, S110
             pass
         try:
             self._playwright.stop()
-        except Exception: # Si ya se detuvo, no hay nada que hacer.  # noqa: S110
+        except Exception: # Si ya se detuvo, no hay nada que hacer.  # noqa: BLE001, S110
             pass
         log.debug("Navegador cerrado")
 
