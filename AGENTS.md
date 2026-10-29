@@ -213,3 +213,6 @@ logs/                   # la crea configurar_log al correr tests o login (ignora
   construye el paquete y lista `dist/`; `ejecutables/tests/` tiene un `.bat`
   por test (mismo nombre, `pause` para leer el resultado y propagacion del
   codigo de salida). Sin cambios de API.
+- **v1.2.1 (2026-10-28)**: `[build-system]` con rango vigente
+  (`uv_build>=0.13.0,<1.0`): el pin anterior `>=0.12.17,<0.13` no incluia
+  la version instalada de `uv` y `uv build` advertia en cada corrida.
